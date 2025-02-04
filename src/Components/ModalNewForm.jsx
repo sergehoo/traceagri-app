@@ -46,8 +46,7 @@ function ModalNewForm() {
                     setDataFields({
                         ...DataFields,
                         ["longitude"]: longitude,
-                        ["latitude"]: latitude,
-                        ["createdDate"]: new Date(),
+                        ["latitude"]: latitude
                     });
                 },
                 (error) => {
@@ -282,7 +281,7 @@ function ModalNewForm() {
                         Sélectionner la ville de l'enquête (<span className="text-danger">*</span>)
                     </label>
 
-                    <input type="num" list='ville' name="ville_enquette" value={DataFields?.localite}
+                    <input type="num" list='ville' name="ville_enquette" value={DataFields?.ville_enquette}
                         className="form-control"
                         onChange={handleInputChange}
                         required id="localite" placeholder="ville de l'enquette" />
@@ -436,7 +435,7 @@ function ModalNewForm() {
                         <div className="mb-3">
                             <label className="small">Quand a-t-il récolté pour la dernière fois ? </label>
                             <input
-                                type="text"
+                                type="date"
                                 name="annee_premiere_recole"
                                 value={DataFields?.annee_premiere_recole}
                                 className="form-control"
