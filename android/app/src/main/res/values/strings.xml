@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">traceagri</string>
+    <string name="title_activity_main">traceagri</string>
+    <string name="package_name">com.traceagri.app</string>
+    <string name="custom_url_scheme">com.traceagri.app</string>
+</resources>
