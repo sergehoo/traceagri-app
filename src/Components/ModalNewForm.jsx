@@ -24,8 +24,9 @@ function ModalNewForm() {
     const [useFertilizers, setUseFertilizers] = useState(false);
     const [useCooperative, setUseCooperative] = useState(false);
     const [load, setLoad] = useState(false)
+    const [Listeville, setListeville] = useState([])
 
-    const [villes, setVilles] = useState([]); // Initialiser avec un tableau vide
+
 
     const [loadingVilles, setLoadingVilles] = useState(false);
     const [errorVilles, setErrorVilles] = useState(null);
@@ -35,9 +36,37 @@ function ModalNewForm() {
 
 
 
-
     useEffect(() => {
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    // Succès : coordonnées récupérées
+                    const latitude = position.coords.latitude;
+                    const longitude = position.coords.longitude;
+                    setDataFields({
+                        ...DataFields,
+                        ["longitude"]: longitude,
+                        ["latitude"]: latitude,
+                        ["createdDate"]: new Date(),
+                    });
+                },
+                (error) => {
+                    console.log(error)
+                }
+            );
+        } else {
+            console.error("La géolocalisation n'est pas supportée par ce navigateur.");
+        }
+
+        setTimeout(() => {
+            const reqTo = JSON.parse(localStorage.getItem("token"));
+            if (reqTo) {
+                Localiter(reqTo.token)
+            }
+        }, 100);
+
         if (uid && uid !== undefined && uid !== "") {
+            console.log()
             const req = JSON.parse(localStorage.getItem("data")) || []
             if (req && req.length > 0) {
                 const dataList = req.find(item => Number(item.uid) === Number(uid))
@@ -54,18 +83,6 @@ function ModalNewForm() {
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
 
-
-    const handleCapturePhoto = () => {
-        navigator.mediaDevices.getUserMedia({ video: true })
-            .then((stream) => {
-                const video = videoRef.current;
-                video.srcObject = stream;
-                video.play();
-            })
-            .catch((err) => {
-                console.error('Erreur d\'accès à la caméra :', err);
-            });
-    };
 
     const handleSavePhoto = () => {
         const video = videoRef.current;
@@ -236,67 +253,19 @@ function ModalNewForm() {
         //console.log(DataFields);
     };
 
-    useEffect(() => {
-        const storedVilles = localStorage.getItem("villes");
 
-        if (storedVilles) {
-            try {
-                const parsedVilles = JSON.parse(storedVilles);
-                if (Array.isArray(parsedVilles)) {
-                    setVilles(parsedVilles);
-                } else {
-                    console.error("Les villes stockées ne sont pas un tableau.");
-                    setVilles([]); // Initialiser avec un tableau vide
-                }
-            } catch (error) {
-                console.error("Erreur lors de la lecture des villes depuis localStorage:", error);
-                setVilles([]); // Initialiser avec un tableau vide
-            }
-        } else if (navigator.onLine) {
-            fetchVilles(); // Charger les villes depuis l'API si l'utilisateur est en ligne
-        } else {
-            setVilles([]); // Initialiser avec un tableau vide si aucune donnée n'est trouvée et l'utilisateur est hors ligne
-        }
-    }, []);
 
-    const fetchVilles = async () => {
-        setLoadingVilles(true);
-        try {
-            const token = localStorage.getItem("token");
-            if (!token) {
-                throw new Error("Token d'authentification non fourni.");
-            }
 
-            const response = await fetch('https://traceagri.com/fr/api/localites/', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error('Erreur lors du chargement des villes');
-            }
-
-            const data = await response.json();
-            if (Array.isArray(data)) {
-                setVilles(data);
-                localStorage.setItem("villes", JSON.stringify(data));
-            } else {
-                console.error("Les données de l'API ne sont pas un tableau.");
-                setVilles([]); // Initialiser avec un tableau vide
-            }
-        } catch (error) {
-            console.error("Erreur lors de la récupération des villes:", error);
-            setErrorVilles(error.message);
-            setVilles([]); // Initialiser avec un tableau vide
-        } finally {
-            setLoadingVilles(false);
-        }
-    };
-
-    console.log(localStorage.getItem("token"));
-    console.log(localStorage.getItem("villes"));
-    
+    const Localiter = async (token) => {
+        const app = await fetch("https://traceagri.com/fr/api/localites/", {
+            headers: {
+                "Authorization": `Token ${token}`
+            },
+            method: "get"
+        })
+        const res = await app.json()
+        setListeville(res)
+    }
 
     return (
         <div className="container pt-2 mb-5">
@@ -308,25 +277,22 @@ function ModalNewForm() {
             </div>
 
             <form className="container mb-5" id="formsubmit" onSubmit={handleSubmit}>
-            <div className="mb-3">
-                <label className="small">
-                    Sélectionner la ville de l'enquête (<span className="text-danger">*</span>)
-                </label>
-                <select
-                    name="localite"
-                    value={DataFields?.localite}
-                    className="form-control"
-                    onChange={handleInputChange}
-                    required
-                >
-                    <option value="">Sélectionnez une ville</option>
-                    {Array.isArray(villes) && villes.map((ville) => (
-                        <option key={ville.id} value={ville.id}>
-                            {ville.name}
-                        </option>
-                    ))}
-                </select>
-            </div>
+                <div className="mb-3">
+                    <label className="small">
+                        Sélectionner la ville de l'enquête (<span className="text-danger">*</span>)
+                    </label>
+
+                    <input type="num" list='ville' name="ville_enquette" value={DataFields?.localite}
+                        className="form-control"
+                        onChange={handleInputChange}
+                        required id="localite" placeholder="ville de l'enquette" />
+
+                    <datalist id='ville'>
+                        {Listeville && Listeville.length > 0 && Listeville.map(item => (
+                            <option key={item.id} value={item.name}>{item.name}</option>
+                        ))}
+                    </datalist>
+                </div>
 
                 <h6>Section A (Hautement sensible)</h6>
                 <div className="mb-3">
@@ -419,7 +385,7 @@ function ModalNewForm() {
                     </div>
                 </div>
 
-               
+
                 <div className="mb-3">
                     <label className="small">Quel type de culture est actuellement planté dans la plantation ? (<span className="text-danger">*</span>) </label>
                     <select
@@ -438,7 +404,7 @@ function ModalNewForm() {
 
                 {cultureType === "Pérenne" && (
                     <>
-                         <h6>Section B (Culture Pérenne)</h6>
+                        <h6>Section B (Culture Pérenne)</h6>
                         <div className="mb-3">
                             <label className="small">Quelle culture est actuellement cultivée dans la plantation ? </label>
                             <select
@@ -550,7 +516,7 @@ function ModalNewForm() {
 
                 {cultureType === "annuelle" && (
                     <>
-                         <h6>Section C (Culture annuelle)</h6>
+                        <h6>Section C (Culture annuelle)</h6>
                         <div className="mb-3">
                             <label className="small">Quelle culture est actuellement cultivée dans la plantation ? (Il s'agit de la plantation dans laquelle les polygones seront capturés)</label>
                             <select
@@ -704,14 +670,14 @@ function ModalNewForm() {
                     <div className="mb-3">
                         <label className="small">Quel type d'engrais utilisez-vous ?</label>
                         <select name="fertilizerType" className="form-select" onChange={handleInputChange}
-                    >
-                        <option value={DataFields?.fertilizerType}>{DataFields?.fertilizerType}</option>
-                        <option value="">Sélectionnez</option>
-                        <option value="Engrais mineral(NPK)">Engrais mineral(NPK)</option>
-                        <option value="Engrais organique">Engrais organique</option>
-                        <option value="Engrais bio">Engrais bio</option>
-                        <option value="Engrais organo-mineral">Engrais organo-mineral</option>
-                    </select>
+                        >
+                            <option value={DataFields?.fertilizerType}>{DataFields?.fertilizerType}</option>
+                            <option value="">Sélectionnez</option>
+                            <option value="Engrais mineral(NPK)">Engrais mineral(NPK)</option>
+                            <option value="Engrais organique">Engrais organique</option>
+                            <option value="Engrais bio">Engrais bio</option>
+                            <option value="Engrais organo-mineral">Engrais organo-mineral</option>
+                        </select>
                     </div>
                 )}
 
