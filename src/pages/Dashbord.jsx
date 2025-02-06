@@ -46,6 +46,21 @@ function Dashbord() {
         }, 2000);
     }
 
+    const Localiter = async (token) => {
+        try {
+            const app = await fetch("https://traceagri.com/fr/api/localites/", {
+                headers: {
+                    "Authorization": `Token ${token}`
+                },
+                method: "get"
+            })
+            const res = await app.json()
+            if (res && res.length > 0) localStorage.setItem("villes", JSON.stringify(res))
+        } catch (error) {
+
+        }
+    }
+
     useEffect(() => {
 
         const initializeData = async () => {
@@ -53,6 +68,7 @@ function Dashbord() {
             setUser(userInfo);
             setLoad(false);
             await Synchro(userInfo);
+            Localiter(userInfo.token)
         };
 
         const hasSynched = sessionStorage.getItem("hasSynched");
@@ -65,6 +81,7 @@ function Dashbord() {
             setUser(userInfo);
             setLoad(false);
             setSynchroloading(false)
+            Localiter(userInfo.token)
             setTimeout(() => {
                 setCardLoad(false)
             }, 1000)

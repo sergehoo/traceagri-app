@@ -62,7 +62,7 @@ export const SynchroAuto = async (user) => {
 
         // Si une erreur est survenue, on ne renvoie pas les données
         if (errorOccurred === "err") {
-            return { status: 500, message: "Erreur lors de la synchronisation de certaines données." };
+            return { status: 500, message: "Données en cache en attente d'une connexion internet." };
         } else if (errorOccurred === "ok") {
             return { status: 201, message: "Donnèes sauvegardèes et synchronièes avec succès", data };
         }

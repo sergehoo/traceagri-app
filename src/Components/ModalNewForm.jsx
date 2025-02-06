@@ -5,6 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { storeFileInIndexedDB } from '../IndexDB/SaveFiles';
 import { FaCamera } from "react-icons/fa";
 import { GetFile } from '../IndexDB/GetFiles';
+import { SynchroAuto } from '../controller/SynchroAuto';
 
 function ModalNewForm() {
 
@@ -143,7 +144,9 @@ function ModalNewForm() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         const user = JSON.parse(localStorage.getItem("token")) || null
+
         let dataSeve = JSON.parse(localStorage.getItem("data")) || []
+
         const indexBD = (DataFields?.idphoto !== undefined && DataFields?.idphoto !== "") ?
             DataFields?.idphoto : (DataFields.photo !== undefined && DataFields.photo !== null) && await storeFileInIndexedDB(DataFields.photo)
         DataFields.idphoto = indexBD
@@ -184,7 +187,8 @@ function ModalNewForm() {
                     enqueueSnackbar("Donnèes sauvegardèes et synchronièes avec succès", { variant: "success" })
                 } else {
                     DataFields.isSynchro = false
-                    enqueueSnackbar("Donnèes sauvegardèes et en attente de synchronisation", { variant: "warning" })
+                    //Pour l'instant
+                    //enqueueSnackbar("Donnèes sauvegardèes et en attente de synchronisation", { variant: "warning" })
                 }
 
                 if (dataSeve && dataSeve.length > 0) {
@@ -213,6 +217,14 @@ function ModalNewForm() {
                 console.log("token vide")
             }
             setLoad(false)
+
+            const rep = await SynchroAuto(user)
+            if (rep && rep.status === 201) {
+                enqueueSnackbar(rep.message, { variant: "success" })
+            } else {
+                enqueueSnackbar(rep.message, { variant: "warning" })
+            }
+
             setTimeout(() => {
                 document.getElementById("formsubmit").reset()
             }, 100);
@@ -240,10 +252,16 @@ function ModalNewForm() {
                 localStorage.setItem("data", JSON.stringify([DataFields]))
             }
 
-
-
-            enqueueSnackbar("Donnèes sauvegardèes et en attente de synchronisation", { variant: "warning" })
+            //enqueueSnackbar("Donnèes sauvegardèes et en attente de synchronisation", { variant: "warning" })
             setLoad(false)
+
+            const rep = await SynchroAuto(user)
+            if (rep && rep.status === 201) {
+                enqueueSnackbar(rep.message, { variant: "success" })
+            } else {
+                enqueueSnackbar(rep.message, { variant: "warning" })
+            }
+
             setTimeout(() => {
                 document.getElementById("formsubmit").reset()
             }, 100);
@@ -252,17 +270,8 @@ function ModalNewForm() {
         //console.log(DataFields);
     };
 
-
-
-
-    const Localiter = async (token) => {
-        const app = await fetch("https://traceagri.com/fr/api/localites/", {
-            headers: {
-                "Authorization": `Token ${token}`
-            },
-            method: "get"
-        })
-        const res = await app.json()
+    const Localiter = () => {
+        const res = JSON.parse(localStorage.getItem("villes")) || []
         setListeville(res)
     }
 
@@ -533,6 +542,18 @@ function ModalNewForm() {
                         </div>
 
                         <div className="mb-3">
+                            <label className="small">Années de mise en place de la culture *</label>
+                            <input type='number' name="annee_mis_place_culture" className="form-control" onChange={handleOtherCropChange} />
+                        </div>
+
+                        <div className="mb-3">
+                            <label className="small">Quelle est la date probable de la récolte ?	</label>
+                            <input type="date" name="dateProbaleRecole" value={DataFields?.dateProbaleRecole} className="form-control" placeholder="Quelle est la date probable de la récolte" onChange={handleInputChange} />
+                        </div>
+
+
+
+                        <div className="mb-3">
                             <label className="small">Au cours des 4 dernières années, le producteur a-t-il planté une autre culture dans la même plantation ? *</label>
                             <select name="otherCropPlanted" className="form-select" onChange={handleOtherCropChange}>
                                 <option value={DataFields?.otherCropPlanted}>{DataFields?.otherCropPlanted}</option>
@@ -560,11 +581,6 @@ function ModalNewForm() {
                                 <div className="mb-3">
                                     <label className="small">En quelle année l'a-t-il plantée ?</label>
                                     <input type="number" name="otherCropYear" value={DataFields?.otherCropYear} className="form-control" placeholder="Entrez l'année" onChange={handleInputChange} />
-                                </div>
-
-                                <div className="mb-3">
-                                    <label className="small">Quelle est la date probable de la récolte ?	</label>
-                                    <input type="date" name="dateProbaleRecole" value={DataFields?.dateProbaleRecole} className="form-control" placeholder="Quelle est la date probable de la récolte" onChange={handleInputChange} />
                                 </div>
 
 
